@@ -1,0 +1,41 @@
+project_name: DPM-PADTS
+seed: 42
+log_interval: 10
+
+# Data configuration
+data:
+  # If synthetic = true, the dataset will be generated on-the-fly
+  synthetic: true
+  synthetic_len: 200
+  manifest_path: null
+  batch_size: 4
+  num_workers: 2
+  image_size: 224
+  mri_size: [64, 128, 128]
+  omics_seq_len: 128
+
+# Model configuration
+model:
+  embed_dim: 256
+  diag_num_classes: 3
+  clinical_input_dim: 64
+  omics_feature_dim: 128
+  mri_in_channels: 1
+  pathology_backbone: vit_base_patch16_224
+  fusion_layers: 2
+  fusion_heads: 8
+  fusion_dropout: 0.1
+
+# Optimization and training
+optim:
+  eta_main: 0.001
+  eta_base: 0.0001
+  weight_decay: 0.0001
+  epochs: 1
+  amp: true
+
+# Loss weights
+loss_weights:
+  diag: 1.0
+  treat: 1.0
+  prog: 1.0
