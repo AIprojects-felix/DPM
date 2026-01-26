@@ -18,12 +18,12 @@ The model fuses four data modalities (Clinical, Omics, MRI, Pathology) via a Tra
 - [Overview](#overview)
 - [Project Structure](#project-structure)
 - [Architecture](#architecture)
-- [Missing Modality Handling](#missing-modality-handling)
 - [Sample Data](#sample-data)
 - [Installation](#installation)
 - [Usage](#usage)
 - [Evaluation](#evaluation)
 - [Model and Training Details](#model-and-training-details)
+- [Missing Modality Handling](#missing-modality-handling)
 - [Pre-trained Weights](#pre-trained-weights-optional)
 - [Results and Analysis](#results-and-analysis)
 
@@ -88,43 +88,6 @@ The DPM architecture consists of:
    - Diagnosis, Staging, Treatment Response, and Prognosis
 
 See the architecture illustration in [results/figure1.png](results/figure1.png).
-
-## Missing Modality Handling
-
-Real-world clinical data often has missing modalities due to varying diagnostic protocols across visits. The DPM model handles this through **learnable missing-modality tokens**.
-
-![Supplementary Figure 2: Missing modality handling](results/supplementary_figure_2.png)
-
-### Three-Stage Pipeline
-
-1. **Longitudinal Patient Timeline (Data Layer)**
-   - Patients have multiple visits over time (V001, V002, ..., Vt)
-   - Each visit may have different available modalities
-   - Missing modalities are marked in the manifest CSV with empty paths
-
-2. **Visit-Level Multimodal Fusion (Per Visit)**
-   - Available modalities are encoded by modality-specific encoders
-   - **Missing modalities are replaced with learnable `[Modality_Missing]` tokens**
-   - Input token sequence: `[CLS], Clinical, Omics/Missing, MRI/Missing, Path/Missing`
-   - Backbone Fusion Transformer produces visit embedding z_t from [CLS] token
-
-3. **Temporal Aggregation (Longitudinal Modeling)**
-   - Sequence of visit embeddings: z_1, z_2, ..., z_t
-   - Time-gap embedding handles irregular visit intervals (Δt)
-   - Temporal Transformer with causal mask aggregates into h_global
-   - Downstream prediction heads output task-specific predictions
-
-### Implementation Details
-
-```python
-# Missing modality tokens (learnable parameters)
-self.clinical_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
-self.omics_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
-self.mri_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
-self.pathology_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
-```
-
-When a modality is absent, the corresponding missing token is used instead of the encoder output, allowing the model to learn meaningful representations even with incomplete data.
 
 ## Sample Data
 
@@ -224,6 +187,43 @@ Output includes detailed tables for Diagnosis, Staging, Treatment, and Prognosis
 ### Multi-GPU
 
 If multiple GPUs are available, the training script will automatically use `torch.nn.DataParallel`. No extra flags are required. For large-scale training, DistributedDataParallel (DDP) can be added later.
+
+## Missing Modality Handling
+
+Real-world clinical data often has missing modalities due to varying diagnostic protocols across visits. The DPM model handles this through **learnable missing-modality tokens**.
+
+![Supplementary Figure 2: Missing modality handling](results/supplementary_figure_2.png)
+
+### Three-Stage Pipeline
+
+1. **Longitudinal Patient Timeline (Data Layer)**
+   - Patients have multiple visits over time (V001, V002, ..., Vt)
+   - Each visit may have different available modalities
+   - Missing modalities are marked in the manifest CSV with empty paths
+
+2. **Visit-Level Multimodal Fusion (Per Visit)**
+   - Available modalities are encoded by modality-specific encoders
+   - **Missing modalities are replaced with learnable `[Modality_Missing]` tokens**
+   - Input token sequence: `[CLS], Clinical, Omics/Missing, MRI/Missing, Path/Missing`
+   - Backbone Fusion Transformer produces visit embedding z_t from [CLS] token
+
+3. **Temporal Aggregation (Longitudinal Modeling)**
+   - Sequence of visit embeddings: z_1, z_2, ..., z_t
+   - Time-gap embedding handles irregular visit intervals (Δt)
+   - Temporal Transformer with causal mask aggregates into h_global
+   - Downstream prediction heads output task-specific predictions
+
+### Implementation Details
+
+```python
+# Missing modality tokens (learnable parameters)
+self.clinical_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
+self.omics_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
+self.mri_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
+self.pathology_missing_token = nn.Parameter(torch.randn(1, 1, E) * 0.02)
+```
+
+When a modality is absent, the corresponding missing token is used instead of the encoder output, allowing the model to learn meaningful representations even with incomplete data.
 
 ## Reproducibility
 
