@@ -153,48 +153,6 @@ data/sample/
     └── ...
 ```
 
-### Manifest CSV Format
-
-The `manifest.csv` file defines patient visits and their associated data paths:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `patient_id` | str | Patient identifier (e.g., P00001) |
-| `visit_id` | str | Visit identifier (e.g., V001, V002) |
-| `visit_date` | date | Visit date (YYYY-MM-DD) |
-| `clinical_path` | str | Path to clinical features (.npy) |
-| `omics_path` | str | Path to omics features (.npy), empty if missing |
-| `mri_path` | str | Path to MRI features (.npy), empty if missing |
-| `pathology_path` | str | Path to pathology features (.npy), empty if missing |
-| `diag_label` | int | Diagnosis label (0-7) |
-| `isup_grade` | int | ISUP grade (0-4, -1 if N/A) |
-| `ipss_score` | int | IPSS category (0-2, -1 if N/A) |
-| `nih_cpsi_score` | int | NIH-CPSI category (0-2, -1 if N/A) |
-| `treat_labels` | list | Multi-label treatment (10-dim binary) |
-| `prog_time` | float | Survival time in days |
-| `prog_event` | int | Event indicator (0=censored, 1=event) |
-| `split` | str | Data split (train/val/test) |
-
-### Sample Data Statistics
-
-- **50 patients** (P00001-P00050)
-- **195 total visits** (3-5 visits per patient)
-- **Split**: 70% train, 15% val, 15% test
-- **Modality availability** (simulating real-world missingness):
-  - Clinical: 100% (always available)
-  - MRI: ~50%
-  - Pathology: ~30%
-  - Omics: ~10%
-
-### Data Tensor Shapes
-
-| Modality | Shape | Description |
-|----------|-------|-------------|
-| Clinical | `(64,)` | 64-dim clinical feature vector |
-| Omics | `(128, 128)` | 128 genes × 128 features |
-| MRI | `(1, 64, 128, 128)` | 1 channel, 64×128×128 volume |
-| Pathology | `(3, 224, 224)` | RGB, 224×224 patch |
-
 ## Installation
 
 ### Requirements
@@ -244,58 +202,7 @@ data:
 
 Missing modality paths should be left empty in the CSV.
 
-## Data Format
 
-Data format follows the manifest CSV structure described in [Sample Data](#sample-data). For implementation details, see [dpm/data/dataset.py](dpm/data/dataset.py).
-
-## Configuration
-
-Key parameters can be adjusted in [configs/default_config.yaml](configs/default_config.yaml):
-
-### Model Architecture (as described in paper)
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `embed_dim` | 768 | Shared embedding dimension across all modalities |
-| `fusion_layers` | 6 | Backbone Fusion Transformer depth (L=6 in paper) |
-| `fusion_heads` | 8 | Attention heads for fusion |
-| `temporal_layers` | 4 | Temporal Transformer depth |
-| `temporal_heads` | 8 | Attention heads for temporal modeling |
-
-### Data Configuration
-- `data`: `synthetic`, `synthetic_len`, `manifest_path`, `batch_size`, `num_workers`, `image_size`, `mri_size`, `omics_seq_len`
-
-### Optimization
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `eta_main` | 1e-4 | Learning rate for randomly initialized components |
-| `eta_base` | 1e-5 | Learning rate for pre-trained encoders (MRI, Pathology) |
-| `epochs` | 50 | Maximum training epochs |
-| `scheduler` | cosine | LR scheduler (cosine, step, none) |
-| `warmup_epochs` | 5 | Warmup epochs for scheduler |
-
-### Early Stopping
-```yaml
-early_stopping:
-  enabled: true
-  patience: 10      # Stop if no improvement for 10 epochs
-  monitor: val_loss
-```
-
-### Loss Weights
-- `loss_weights`: per-task weights for the multi-task objective (λ₁=1.0, λ₂=0.8, λ₃=1.2 as in paper)
-
-## Tasks and Labels
-
-The DPM supports six supervised prediction tasks:
-
-| Task | Type | Classes/Labels | CSV Field |
-|------|------|----------------|-----------|
-| **Diagnosis** | Multi-class | 8 classes (Normal, BPH, Prostatitis, PCa G1-5) | `diag_label` |
-| **ISUP Grading** | Multi-class | 5 grades | `isup_label` |
-| **IPSS Score** | Multi-class | 3 categories | `ipss_label` |
-| **NIH-CPSI** | Multi-class | 3 categories | `nih_cpsi_label` |
-| **Treatment** | Multi-label | 10 treatment types | `treat_label` |
-| **Prognosis** | Survival | Time + Event | `prog_time`, `prog_event` |
 
 ## Evaluation
 
@@ -374,38 +281,6 @@ If paths are not provided or files don't exist, the model automatically uses ran
 - **MRI-PTPCa**: Contact the original authors for research access
 - **CONCH**: Available on [Hugging Face](https://huggingface.co/MahmoodLab/CONCH) (requires license agreement)
 
-## Data Preprocessing
-
-The `dpm/preprocessing/` module provides **reference implementations** for preprocessing each data modality. These are documentation examples, not production pipelines.
-
-### Available Modules
-
-| Module | Description |
-|--------|-------------|
-| `tabular.py` | Clinical/lab feature standardization |
-| `mri.py` | MRI volume preprocessing (NIfTI loading, resampling, normalization) |
-| `pathology.py` | WSI patch extraction and preprocessing |
-| `omics.py` | Gene expression and proteomics preprocessing |
-
-### Usage Example
-
-```python
-from dpm.preprocessing import preprocess_clinical_features, preprocess_mri_volume
-
-# Preprocess clinical data
-clinical = preprocess_clinical_features(age=65, psa=7.5, ...)
-
-# Preprocess MRI volume
-mri = preprocess_mri_volume("/path/to/t2w.nii.gz", target_size=(64, 128, 128))
-```
-
-See [dpm/preprocessing/README.md](dpm/preprocessing/README.md) for detailed documentation.
-
-### Important Notes
-
-- These are **simplified examples** for documentation purposes
-- Real-world preprocessing should be adapted to your specific data formats
-- Preprocessing is performed **offline** before training
 
 ## Notes
 
