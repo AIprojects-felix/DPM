@@ -1,0 +1,88 @@
+project_name: DPM-PADTS
+seed: 42
+log_interval: 10
+
+data:
+  synthetic: false
+  synthetic_len: 200
+  manifest_path: data/sample/manifest.csv
+  batch_size: 4  # Reduce for GPU memory; increase if you have more VRAM
+  num_workers: 0
+  image_size: 224
+  mri_size: [64, 128, 128]
+  omics_seq_len: 128
+
+model:
+  # Core embedding dimension (as described in paper)
+  embed_dim: 768
+
+  # Diagnosis: 8-class classification
+  # (Normal, Prostatitis, BPH, Localized PCa, Locally Advanced PCa, mHSPC, mCRPC, NEPC)
+  diag_num_classes: 8
+
+  # Modality-specific encoder configs
+  clinical_input_dim: 64
+  omics_feature_dim: 128
+  mri_in_channels: 1
+
+  # Pathology encoder backbone (ViT-Base)
+  # For production: use CONCH pre-trained weights
+  # See: dpm/models/encoders.py for weight loading instructions
+  pathology_backbone: vit_base_patch16_224
+
+  # Backbone Fusion Transformer (as described in paper: L=6)
+  fusion_layers: 6
+  fusion_heads: 8
+  fusion_dropout: 0.1
+
+  # Temporal Transformer for longitudinal modeling
+  temporal_layers: 4
+  temporal_heads: 8
+  temporal_dropout: 0.1
+  max_time_gap: 1825.0  # ~5 years in days
+
+  # Staging task heads
+  isup_num_classes: 5    # ISUP Grade Groups 1-5
+  ipss_num_classes: 3    # IPSS severity: mild/moderate/severe
+  nih_cpsi_num_classes: 3  # NIH-CPSI: mild/moderate/severe
+
+  # Multi-label treatment prediction (10 treatment categories)
+  num_treatments: 10
+
+  # Pre-trained weights (optional, set paths to enable)
+  # These foundation models significantly improve performance but are not
+  # required for code execution. The model will use random initialization
+  # if these paths are not provided.
+  pretrained:
+    mri_ptpca_weights: null      # Path to MRI-PTPCa weights (.pth)
+    conch_weights: null          # Path to CONCH weights (.pth)
+
+optim:
+  # Differential learning rate strategy (as described in paper)
+  # eta_main: for randomly initialized components (encoders, fusion, heads)
+  # eta_base: for pre-trained components (MRI, Pathology encoders)
+  # Relationship: eta_main = 10 * eta_base
+  eta_main: 0.0001   # 1e-4
+  eta_base: 0.00001  # 1e-5
+  weight_decay: 0.01
+  epochs: 50
+  amp: false
+
+  # Learning rate scheduler
+  scheduler: cosine  # Options: cosine, step, none
+  warmup_epochs: 5
+
+  # Early stopping
+  early_stopping:
+    enabled: true
+    patience: 10      # Stop if no improvement for 10 epochs
+    monitor: val_loss
+
+loss_weights:
+  # Multi-task loss weights (as described in paper)
+  diag: 1.0       # λ_1: Diagnosis & Grading
+  treat: 0.8      # λ_2: Treatment Response
+  prog: 1.2       # λ_3: Prognosis
+  isup: 0.5
+  ipss: 0.5
+  nih_cpsi: 0.5

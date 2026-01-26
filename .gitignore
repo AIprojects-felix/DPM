@@ -1,0 +1,43 @@
+# Exclude prompt.md and system files
+prompt.md
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Logs and outputs
+*.log
+logs/
+output/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Virtual environments
+venv/
+env/
+.env
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Model checkpoints and cache
+*.pt
+*.pth
+*.pkl
+*.cache
+
+# Build artifacts
+*.egg-info/
+dpm.egg-info/
+build/
+dist/
+
+# Local tool data
+.serena/
