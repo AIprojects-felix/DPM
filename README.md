@@ -22,13 +22,10 @@ The model fuses four data modalities (Clinical, Omics, MRI, Pathology) via a Tra
 - [Sample Data](#sample-data)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Data Format](#data-format)
-- [Configuration](#configuration)
 - [Evaluation](#evaluation)
 - [Model and Training Details](#model-and-training-details)
+- [Pre-trained Weights](#pre-trained-weights-optional)
 - [Results and Analysis](#results-and-analysis)
-- [Performance](#performance)
-- [Key Findings](#key-findings)
 
 ## Project Structure
 
@@ -190,19 +187,6 @@ python scripts/train.py --config configs/default_config.yaml
 ```
 
 The training script reports per-epoch runtime and (if CUDA is available) peak GPU memory usage.
-
-## Real Data Usage
-
-Prepare your data following the sample data format (see [Sample Data](#sample-data)), then update the config:
-
-```yaml
-data:
-  manifest_path: /path/to/your/manifest.csv
-```
-
-Missing modality paths should be left empty in the CSV.
-
-
 
 ## Evaluation
 
