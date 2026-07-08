@@ -25,7 +25,6 @@ The model fuses four data modalities (Clinical, Omics, MRI, Pathology) via a Tra
 - [Model and Training Details](#model-and-training-details)
 - [Missing Modality Handling](#missing-modality-handling)
 - [Pre-trained Weights](#pre-trained-weights-optional)
-- [Results and Analysis](#results-and-analysis)
 
 ## Project Structure
 
@@ -86,8 +85,6 @@ The DPM architecture consists of:
 
 4. **Multi-Task Prediction Heads**:
    - Diagnosis, Staging, Treatment Response, and Prognosis
-
-See the architecture illustration in [results/figure1.png](results/figure1.png).
 
 ## Sample Data
 
@@ -271,39 +268,6 @@ If paths are not provided or files don't exist, the model automatically uses ran
 - Adjust batch size and number of workers according to your hardware
 - For production training, consider using pre-trained weights for better performance
 - The default configuration matches the paper description for reproducibility
-
-## Results and Analysis
-
-Below are summary figures from experiments demonstrating the DPM model’s capabilities on PADTS tasks. These figures serve as a qualitative overview of the approach and outcomes.
-
-![Figure 1: Overall architecture](results/figure1.png)
-
-- Figure 1 illustrates the overall architecture of the DPM, including modality-specific encoders (Clinical MLP, Omics Transformer, MRI 3D CNN, Pathology ViT) and the Transformer-based fusion with a [CLS] token and learned missing-modality tokens.
-
-### Diagnostic Performance
-
-![Figure 2: Diagnostic performance](results/figure2.png)
-
-- The DPM achieves robust multi-class discrimination across grading categories by leveraging complementary information from the four modalities.
-
-### Staging Performance
-
-![Figure 3: Staging performance](results/figure3.png)
-
-- The model’s conditional fusion allows reliable staging predictions even when one or more modalities are missing.
-
-### Treatment Response
-
-![Figure 4: Treatment response prediction](results/figure4.png)
-
-- The fusion of imaging and non-imaging data helps improve binary treatment-response discrimination.
-
-### Prognosis
-
-![Figure 5: Prognosis prediction](results/figure5.png)
-
-- Survival/prognosis outcomes are modeled via a Cox proportional hazards objective. The global fused representation provides a strong basis for risk stratification.
-
 
 ## License
 
